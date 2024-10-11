@@ -1,0 +1,4 @@
+hello_node_project/node_modules
+hello_node_project/venv
+hello_node_project/models
+hello_node_project/models/gaze_model_pytorch_vgg16_prl_mpii_allsubjects4.model

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gaze Tracking with Camera Feed</title>
+  </head>
+  <body>
+    <h1>Gaze Tracking Application</h1>
+    <video id="video" width="640" height="480" autoplay></video>
+    <button id="startBtn">Start Gaze Tracking</button>
+    <button id="stopBtn">Stop Gaze Tracking</button>
+
+    <script>
+      const video = document.getElementById("video");
+      const startBtn = document.getElementById("startBtn");
+      const stopBtn = document.getElementById("stopBtn");
+      let mediaStream = null;
+      let captureInterval = null;
+
+      // Request access to the camera
+      navigator.mediaDevices
+        .getUserMedia({ video: true })
+        .then((stream) => {
+          video.srcObject = stream;
+          mediaStream = stream;
+        })
+        .catch((err) => {
+          console.error("Error accessing camera: ", err);
+        });
+
+      // Convert video frame to base64 image
+      function captureFrame() {
+        const canvas = document.createElement("canvas");
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        return canvas.toDataURL("image/jpeg"); // Capture frame as base64 image
+      }
+
+      // Start sending frames to the server
+      startBtn.addEventListener("click", () => {
+        // Trigger some initialization on the server before starting frame capture
+        fetch("/trigger")
+          .then((response) => response.text())
+          .then((message) => {
+            console.log(message);
+            // Now start capturing and sending frames
+            captureInterval = setInterval(() => {
+              const frame = captureFrame();
+              fetch("/upload_frame", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ image: frame }),
+              })
+                .then((response) => response.text())
+                .then((message) => console.log(message))
+                .catch((err) => console.error(err));
+            }, 100); // Capture frame every 100ms
+          })
+          .catch((err) => {
+            console.error("Error triggering gaze tracking:", err);
+          });
+      });
+
+      // Stop sending frames and camera feed
+      stopBtn.addEventListener("click", () => {
+        clearInterval(captureInterval); // Stop sending frames
+        fetch("/stop")
+          .then((response) => response.text())
+          .then((message) => {
+            console.log(message);
+            // Optionally stop the camera feed
+            if (mediaStream) {
+              const tracks = mediaStream.getTracks();
+              tracks.forEach((track) => track.stop()); // Stop the camera stream
+              mediaStream = null;
+            }
+          })
+          .catch((err) => console.error("Error stopping gaze tracking:", err));
+      });
+    </script>
+  </body>
+</html>
