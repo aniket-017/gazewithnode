@@ -49,6 +49,7 @@
             // Now start capturing and sending frames
             captureInterval = setInterval(() => {
               const frame = captureFrame();
+              // console.log(frame);
               fetch("/upload_frame", {
                 method: "POST",
                 headers: {

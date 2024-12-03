@@ -44,6 +44,7 @@ app.get("/trigger", (req, res) => {
 app.post("/upload_frame", (req, res) => {
   const base64Data = req.body.image.replace(/^data:image\/jpeg;base64,/, "");
 
+  
   // Define the path to store the image inside the Scripts folder
   const imagePath = path.join(__dirname, "Scripts", "current_frame.jpg");
 
